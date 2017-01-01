@@ -25,6 +25,8 @@
 
 namespace detail {
 
+    constexpr static bool double_comparison = true;
+
     // with-trivial-copies version
     template<typename Iter, typename Comp>
     void dmsort(Iter begin, Iter end, Comp comp, std::true_type) {
@@ -44,6 +46,14 @@ namespace detail {
 
         while (read != end) {
             if (begin != write && comp(*read, *(write - 1))) {
+
+                if (double_comparison && num_dropped_in_row == 0 && write > begin+1 && !comp(*read, *(write-2))) {
+                    dropped.push_back(*(write-1));
+                    *(write-1) = *read;
+                    ++read;
+                    continue;
+                }
+
                 if (num_dropped_in_row < recency) {
                     dropped.push_back(*read);
                     ++read;
@@ -103,6 +113,14 @@ namespace detail {
 
         while (read != end) {
             if (begin != write && comp(*read, *(write - 1))) {
+
+                if (double_comparison && num_dropped_in_row == 0 && write > begin+1 && !comp(*read, *(write-2))) {
+                    dropped.push_back(std::move(*(write-1)));
+                    *(write-1) = std::move(*read);
+                    ++read;
+                    continue;
+                }
+
                 if (num_dropped_in_row < recency) {
                     dropped.push_back(std::move(*read));
                     ++read;
