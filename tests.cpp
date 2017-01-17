@@ -76,7 +76,37 @@ void test_noncopyable(){
     std::cout << std::is_sorted(std::begin(tab), std::end(tab), cmp) << "\n";
 }
 
+struct NonDefaultConstructible {
+    NonDefaultConstructible() = delete;
+    NonDefaultConstructible(const NonDefaultConstructible&) = delete;
+    NonDefaultConstructible& operator=(const NonDefaultConstructible&) = delete;
+    NonDefaultConstructible(int value) : value(value) {}
+    NonDefaultConstructible(NonDefaultConstructible&& other) : value(other.value) {}
+    NonDefaultConstructible& operator=(NonDefaultConstructible&& other) {
+        value = other.value;
+        return *this;
+    }
+
+    int value;
+};
+
+bool operator<(const NonDefaultConstructible& lhs, const NonDefaultConstructible& rhs) {
+    return lhs.value < rhs.value;
+}
+
+void test_non_default_constructible(){
+    std::vector<NonDefaultConstructible> tab;
+    for(int i = 0; i < 10; ++i)
+        tab.push_back(NonDefaultConstructible(-i));
+    dmsort(tab.begin(), tab.end());
+    for(auto &e : tab)
+        std::cout << e.value << " ";
+    std::cout << "\n";
+    std::cout << std::is_sorted(std::begin(tab), std::end(tab)) << "\n";
+}
+
 int main(){
     test_counts();
     test_noncopyable();
+    test_non_default_constructible();
 }
