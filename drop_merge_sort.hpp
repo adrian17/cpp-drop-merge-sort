@@ -70,6 +70,8 @@ namespace detail {
                     num_dropped_in_row = 0;
                 }
             } else {
+                // Here we don't need to guard against self-move because such an
+                // operation can't destroy the value for trivially copyable types
                 *write = std::move(*read);
                 ++read;
                 ++write;
@@ -139,7 +141,9 @@ namespace detail {
                     num_dropped_in_row = 0;
                 }
             } else {
-                *write = std::move(*read);
+                if (read != write) {
+                    *write = std::move(*read);
+                }
                 ++read;
                 ++write;
                 num_dropped_in_row = 0;
