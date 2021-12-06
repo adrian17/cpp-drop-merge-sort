@@ -30,9 +30,7 @@ namespace detail {
     // with-trivial-copies version
     template<typename Iter, typename Comp>
     void dmsort(Iter begin, Iter end, Comp comp, std::true_type) {
-        size_t size = end - begin;
-
-        if (size < 2)
+        if (begin == end || std::next(begin) == end)
             return;
 
         using Value = typename std::iterator_traits<Iter>::value_type;
@@ -45,11 +43,12 @@ namespace detail {
         constexpr size_t recency = 8;
 
         while (read != end) {
-            if (begin != write && comp(*read, *(write - 1))) {
+            if (begin != write && comp(*read, *std::prev(write))) {
 
-                if (double_comparison && num_dropped_in_row == 0 && write > begin+1 && !comp(*read, *(write-2))) {
-                    dropped.push_back(*(write-1));
-                    *(write-1) = *read;
+                if (double_comparison && num_dropped_in_row == 0 && write != std::next(begin)
+                    && !comp(*read, *std::prev(write, 2))) {
+                    dropped.push_back(*std::prev(write));
+                    *std::prev(write) = *read;
                     ++read;
                     continue;
                 }
@@ -62,7 +61,7 @@ namespace detail {
                     for (int i = 0; i < num_dropped_in_row; ++i) {
                         dropped.pop_back();
                     }
-                    read -= num_dropped_in_row;
+                    std::advance(read, -num_dropped_in_row);
 
                     --write;
                     dropped.push_back(*write);
@@ -86,7 +85,7 @@ namespace detail {
         while (!dropped.empty()) {
             auto & last_dropped = dropped.back();
 
-            while (begin != write && comp(last_dropped, *(write - 1))) {
+            while (begin != write && comp(last_dropped, *std::prev(write))) {
                 --back;
                 --write;
                 *back = std::move(*write);
@@ -100,9 +99,7 @@ namespace detail {
     // move-only version
     template<typename Iter, typename Comp>
     void dmsort(Iter begin, Iter end, Comp comp, std::false_type) {
-        size_t size = end - begin;
-
-        if (size < 2)
+        if (begin == end || std::next(begin) == end)
             return;
 
         using Value = typename std::iterator_traits<Iter>::value_type;
@@ -115,11 +112,12 @@ namespace detail {
         constexpr size_t recency = 8;
 
         while (read != end) {
-            if (begin != write && comp(*read, *(write - 1))) {
+            if (begin != write && comp(*read, *std::prev(write))) {
 
-                if (double_comparison && num_dropped_in_row == 0 && write > begin+1 && !comp(*read, *(write-2))) {
-                    dropped.push_back(std::move(*(write-1)));
-                    *(write-1) = std::move(*read);
+                if (double_comparison && num_dropped_in_row == 0 && write != std::next(begin)
+                    && !comp(*read, *std::prev(write, 2))) {
+                    dropped.push_back(std::move(*std::prev(write)));
+                    *std::prev(write) = std::move(*read);
                     ++read;
                     continue;
                 }
@@ -157,7 +155,7 @@ namespace detail {
         while (!dropped.empty()) {
             auto & last_dropped = dropped.back();
 
-            while (begin != write && comp(last_dropped, *(write - 1))) {
+            while (begin != write && comp(last_dropped, *std::prev(write))) {
                 --back;
                 --write;
                 *back = std::move(*write);

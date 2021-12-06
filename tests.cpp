@@ -1,7 +1,10 @@
-#include <vector>
-#include <iostream>
 #include <algorithm>
+#include <iomanip>
+#include <iostream>
+#include <list>
 #include <memory>
+#include <random>
+#include <vector>
 #include "drop_merge_sort.hpp"
 
 /*
@@ -60,6 +63,24 @@ void test_counts(){
 }
 
 /*
+    Check that dmsort can sort bidirectional iterators
+*/
+
+void test_list(){
+    std::vector<int> vec;
+    for(int i = 0; i < 500000; ++i)
+        vec.push_back(i);
+
+    // Create a shuffled list
+    std::minstd_rand engine(123456);
+    std::shuffle(vec.begin(), vec.end(), engine);
+    std::list<int> li(vec.begin(), vec.end());
+
+    dmsort(li.begin(), li.end());
+    std::cout << std::is_sorted(li.begin(), li.end()) << std::endl;
+}
+
+/*
     Check that the move-only version actually works with move-only types
 */
 
@@ -106,7 +127,10 @@ void test_non_default_constructible(){
 }
 
 int main(){
+    std::cout << std::boolalpha;
+
     test_counts();
+    test_list();
     test_noncopyable();
     test_non_default_constructible();
 }
